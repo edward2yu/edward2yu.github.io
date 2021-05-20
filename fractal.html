@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang=" en-US">
+<head>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js">
+    </script>
+    
+    <meta charset="UTF-8" />
+    <title>Fractal - Mandelbrot &amp; Julia Sets</title>
+    <meta name="description" content="The beautiful Mandelbrot &amp; Julia set." />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style type="text/css">
+      .main-content {
+          word-wrap: break-word;
+          :first-child {
+               margin-top: 0;
+          }
+          @include large {
+            max-width: 80rem;
+            padding: 2rem 6rem;
+            margin: 0 auto;
+            font-size: 1.1rem;
+          }
+          @include medium {
+            padding: 2rem 4rem;
+            font-size: 1.1rem;
+          }
+          @include small {
+            padding: 2rem 1rem;
+            font-size: 1rem;
+          }
+          kbd {
+            background-color: #fafbfc;
+            border: 1px solid #c6cbd1;
+            border-bottom-color: #959da5;
+            border-radius: 3px;
+            box-shadow: inset 0 -1px 0 #959da5;
+            color: #444d56;
+            display: inline-block;
+            font-size: 11px;
+            line-height: 10px;
+            padding: 3px 5px;
+            vertical-align: middle;
+          }
+      }
+      .fractal {
+          padding-left: 0;
+          padding-right: 0;
+          margin-left: auto;
+          margin-right: auto;
+          display: block;
+      }
+      .centerfractaldiv{
+          width:800px;
+          margin:0 auto;
+      }
+      .slider {
+          width: 160px;
+      }
+    </style>
+</head>
+
+<body>
+    <main id="content" class="main-content" role="main">
+        <div>
+    <p>
+    <div>
+        <div id="desc_mandelbrot" style="display: block;">
+            <b>Mandelbrot set:</b> for $z, a\in \mathbb C$, define $f_z(a)=a^2+z$, and
+            $f_z^{(n)}(a) = f_z \left( f_z \left( \cdots f_z(a) \cdots\right) \right) $ where $f_z$ is applied
+            $n$ times. Given a threshold $M\in \mathbb R^+$, for each $z=x+yi\in \mathbb C$,
+            compute the smallest $n$ such that $\bigm|f_z^{(n)}(0)\bigm| > M$, and assign the color at
+            coordinates $(x,y)$ according to the value of $n$. And Voila!
+        </div>
+        <div id="desc_julia" style="display: none;">
+            <b>Julia set:</b> for $w, z\in \mathbb C$, define $f_w(z)=z^2+w$, and
+            $f_w^{(n)}(z) = f_w \left( f_w \left( \cdots f_w(z) \cdots\right) \right) $ where $f_w$ is applied
+            $n$ times. Given a threshold $M\in \mathbb R^+$, and $w\in \mathbb C$,
+            for each $z=x+yi\in \mathbb C$,
+            compute the smallest $n$ such that $\bigm|f_w^{(n)}(z)\bigm| > M$, and assign the color at
+            coordinates $(x,y)$ according to the value of $n$. And Voila!
+        </div>
+    </div>
+    </p>
+    <p>
+        Below you can switch between Mandelbrot and Julia sets. You can adjust the size, the maximum number of iterations,
+        the threshold $M$, the coloring scheme, and the color palette. In case of Julia set, you can also click on the gray square
+        to change the value of $w$. The computation runs in
+        your browser, be patient, it may take a few sections after you release the slider for the image
+        to update, if you use CPU compute. (Tip: smaller image size runs faster, WebGL is much faster than CPU.)
+    </p>
+    <p>Double click on the image to zoom in. Double click while holding "Shift" key to zoom out. Drag the image to move.</p>
+</div>
+<div class="centerfractaldiv">
+    <table>
+        <tr>
+            <td>
+                <input type="radio" name="sets" value="mandelbrot" onchange="onSetChange()" checked />
+                <lable><b>Mandelbrot</b></lable><br />
+                <input type="radio" name="sets" value="julia" onchange="onSetChange()" />
+                <lable><b>Julia</b></lable>
+            </td>
+            <td>
+                <input type="radio" name="compute" value="WebGL" onchange="onComputeChange()" checked />
+                <lable><b>WebGL</b></lable><br />
+                <input type="radio" name="compute" value="CPU" onchange="onComputeChange()" />
+                <lable><b>CPU</b></lable>
+            </td>
+            <td>
+                <input type="radio" name="colorscheme" value="hue" onchange="onColorSchemeChange()" checked />
+                <lable><b>Color: Hue</b></lable><br>
+                <input type="radio" name="colorscheme" value="rgb" onchange="onColorSchemeChange()" />
+                <lable><b>Color: RGB</b></lable>
+            </td>
+            <th>Color Palette : <span id="colorVal">0</span><br>
+                <input type="range" min="0" max="100" value="0" class="slider" oninput="onColorInput(this.value)" onchange=" onColorChange(this.value)">
+            </th>
+        </tr>
+        <tr>
+            <th>Image Size :<br>
+                <span id="imgSizeVal">900*600</span><br>
+                <input type="range" min="400" max="3200" value="600" class="slider" oninput="onSizeInput(this.value)" onchange=" onSizeChange(this.value)">
+            </th>
+            <th>Max Iterations: <br>
+                <span id="maxIterVal">500</span><br>
+                <input type="range" min="500" max="5000" value="500" class="slider" oninput="onMaxIterationInput(this.value)" onchange="onMaxIterationChange(this.value)">
+            </th>
+            <th>Threshold $M$ :<br>
+                <span id="thresholdVal">4</span><br>
+                <input type="range" min="2" max="200" value="4" class="slider" oninput="onThresholdInput(this.value)" onchange=" onThresholdChange(this.value)">
+            </th>
+            <th id="juliaValZCell">$w=$ <span id="juliaValZ"></span><br>
+                <canvas id="juliaZ" width="100" height="100" onmousedown="onJuliaZStart(event)" onmouseup="onJuliaZEnd(event)" onmousemove="onJuliaZMove(event)">
+                </canvas>
+            </th>
+        </tr>
+    </table>
+</div>
+
+<div>
+    <canvas id="canvasCPU" class="fractal" width="960" height="600" ondblclick="onZoomIn(event)" onmousedown="onStartDrag(event)" onmouseup="onEndDrag(event)">
+    </canvas>
+    <canvas id="canvasWebGL" class="fractal" width="960" height="600" ondblclick="onZoomIn(event)" onmousedown="onStartDrag(event)" onmouseup="onEndDrag(event)">
+    </canvas>
+</div>
+
+<script>
+    ////////////////////////////////////////////////////////////////////////////////
+    // This section defines the global variables and initializes everything.
+    ////////////////////////////////////////////////////////////////////////////////
+
+    // Used in translating iteration number into color values.
+    const byteSquared = 256 * 256;
+    const byteCubed = 256 * 256 * 256 - 1;
+    const zoomRatio = 4; // ratio in each step of zoom in/out.
+    let threshold = 4.0; // The threshold M.
+    let colorOffset = 0.0; // The color palette seed.
+    let colorSchemeHue = true;
+    let maxIterations = 500;
+    let isJulia = false; // true:Julia, false:Mandelbrot.
+    let aspectRatio = 0; // width:height ratio
+    let useWebGL = true; // true: use WebGL to render, false: use CPU to render.
+
+    // For Julia set only: w = (wx) + i(wy)
+    let wx = 0;
+    let wy = 0;
+
+    // The boundary of the logical coordinates (x,y) in the complex plane.
+    let ymin = 0;
+    let ymax = 0;
+    let xmax = 0;
+    let xmin = 0;
+
+    resetAll();
+    showFractal();
+
+    function resetAll() {
+        if (isJulia) {
+            aspectRatio = 1;
+            wx = -0.7269;
+            wy = 0.1889;
+            document.getElementById("desc_mandelbrot").style.display = "none";
+            document.getElementById("desc_julia").style.display = "block";
+            document.getElementById("juliaValZCell").style.display = "block";
+            updateJuliaZ();
+        } else {
+            aspectRatio = 1.5;
+            document.getElementById("desc_julia").style.display = "none";
+            document.getElementById("desc_mandelbrot").style.display = "block";
+            document.getElementById("juliaValZCell").style.display = "none";
+        }
+        ymin = -1;
+        ymax = 1;
+        xmax = 1;
+        xmin = 1 - 2 * aspectRatio;
+        let canvas = document.getElementById('canvasCPU');
+        canvas.width = Math.floor(canvas.height * aspectRatio);
+        canvas = document.getElementById('canvasWebGL');
+        canvas.width = Math.floor(canvas.height * aspectRatio);
+        document.getElementById("imgSizeVal").innerHTML = canvas.width.toString() + "*" + canvas.height.toString();
+    }
+    function updateJuliaZ() {
+        document.getElementById("juliaValZ").innerHTML = wx.toPrecision(2) + "+" + wy.toPrecision(2) + "i";
+        let canvas = document.getElementById("juliaZ");
+        let ctx = canvas.getContext('2d');
+        ctx.fillStyle = "#dddddd";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        let px = canvas.width / 2 * (1 + wx);
+        let py = canvas.height / 2 * (1 + wy);
+        ctx.arc(px, py, 3, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.fillStyle = "#2222ff";
+        ctx.fill();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // This section deals with the changes of the controls.
+    ////////////////////////////////////////////////////////////////////////////////
+
+    function onSizeInput(v) {
+        document.getElementById("imgSizeVal").innerHTML = Math.floor(v * aspectRatio).toString() + "*" + v.toString();
+    }
+    function onSizeChange(v) {
+        let canvas = document.getElementById('canvasCPU');
+        canvas.height = v;
+        canvas.width = Math.floor(v * aspectRatio);
+        canvas = document.getElementById('canvasWebGL');
+        canvas.height = v;
+        canvas.width = Math.floor(v * aspectRatio);
+        showFractal();
+    }
+    function onMaxIterationInput(v) {
+        document.getElementById("maxIterVal").innerHTML = v;
+    }
+    function onMaxIterationChange(v) {
+        maxIterations = v;
+        showFractal();
+    }
+    function onThresholdInput(v) {
+        document.getElementById("thresholdVal").innerHTML = v;
+    }
+    function onThresholdChange(v) {
+        threshold = v;
+        showFractal();
+    }
+    function onColorInput(v) {
+        document.getElementById("colorVal").innerHTML = v / 100;
+        if (useWebGL) { showFractal(); }
+    }
+    function onColorChange(v) {
+        colorOffset = v / 100;
+        showFractal();
+    }
+    function onSetChange() {
+        let isJuliaChecked = checkRadioButton("sets", "julia");
+        if (isJulia !== isJuliaChecked) {
+            isJulia = isJuliaChecked;
+            resetAll();
+            showFractal();
+        }
+    }
+    function onColorSchemeChange() {
+        let isHueChecked = checkRadioButton("colorscheme", "hue");
+        if (colorSchemeHue !== isHueChecked) {
+            colorSchemeHue = isHueChecked;
+            resetAll();
+            showFractal();
+        }
+    }
+    function onComputeChange() {
+        let isWebGLChecked = checkRadioButton("compute", "WebGL");
+        if (useWebGL !== isWebGLChecked) {
+            useWebGL = isWebGLChecked;
+            resetAll();
+            showFractal();
+        }
+    }
+    // Checks the radio buttons of the given name, returns true if the given value is checked.
+    function checkRadioButton(name, value) {
+        let radios = document.getElementsByName(name);
+        for (let i = 0; i < radios.length; i++) {
+            if (radios[i].checked) {
+                return radios[i].value === value;
+            }
+        }
+        return false;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // This section deals with mouse double click and drag of the main canvas
+    ////////////////////////////////////////////////////////////////////////////////
+    let juliaZStarted = false;
+    function onJuliaZStart(event) {
+        juliaZStarted = true;
+        onJuliaZMove(event);
+    }
+    function onJuliaZEnd(event) {
+        if (juliaZStarted) {
+            juliaZStarted = false;
+            showFractal();
+        }
+    }
+    function onJuliaZMove(event) {
+        if (juliaZStarted) {
+            let canvas = document.getElementById("juliaZ");
+            let px = event.offsetX;
+            let py = event.offsetY;
+            if (px < 0) px = 0;
+            if (px > canvas.width) px = canvas.width;
+            if (py < 0) py = 0;
+            if (py > canvas.height) py = canvas.height;
+            wx = px * 2 / canvas.width - 1;
+            wy = py * 2 / canvas.height - 1;
+            updateJuliaZ();
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // This section deals with mouse double click and drag of the main canvas
+    ////////////////////////////////////////////////////////////////////////////////
+
+    // Used in start/end drag event handlers.
+    let isInDrag = false;
+    let startDragX = 0;
+    let startDragY = 0;
+
+    function onZoomIn(event) {
+        isInDrag = false;
+        let zoomOut = event.getModifierState("Shift"); // Check whether shift-key is down.
+        let canvas = document.getElementById('canvasCPU');
+        let x = event.offsetX / canvas.width * (xmax - xmin) + xmin;
+        let effectiveY = useWebGL ? (canvas.height - event.offsetY) : event.offsetY;
+        let y = effectiveY / canvas.height * (ymax - ymin) + ymin;
+        let w = zoomOut ? (xmax - xmin) * zoomRatio : (xmax - xmin) / zoomRatio;
+        let h = zoomOut ? (ymax - ymin) * zoomRatio : (ymax - ymin) / zoomRatio;
+        xmax = x + w / 2; xmin = x - w / 2;
+        ymax = y + h / 2; ymin = y - h / 2;
+        showFractal();
+    }
+    function onStartDrag(event) {
+        isInDrag = true;
+        startDragX = event.offsetX;
+        startDragY = event.offsetY;
+    }
+    function onEndDrag(event) {
+        if (isInDrag) {
+            isInDrag = false;
+            let canvas = document.getElementById('canvasCPU');
+            let xDiff = (event.offsetX - startDragX) / canvas.width * (xmax - xmin);
+            let yDiff = (event.offsetY - startDragY) / canvas.height * (ymax - ymin);
+            if (useWebGL) {
+                yDiff = -yDiff;
+            }
+            xmax -= xDiff; xmin -= xDiff;
+            ymax -= yDiff; ymin -= yDiff;
+            showFractal();
+        }
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // This section performs the actual computation and drawing, using CPU rendering.
+    ////////////////////////////////////////////////////////////////////////////////
+
+    function showFractal() {
+        if (useWebGL && window.WebGLRenderingContext) {
+            if (showFractalWebGL()) {
+                return;
+            }
+        }
+        // If the selection is to use CPU rendering, or WebGL failed, then render using CPU.
+        document.body.style.cursor = 'wait';
+        document.getElementById('canvasCPU').style.opacity = "0.3";
+        setTimeout(showFractalCPU, 50);
+    }
+
+    function showFractalCPU() {
+        let otherCanvas = document.getElementById('canvasWebGL');
+        let canvas = document.getElementById('canvasCPU');
+        otherCanvas.style.display = "none";
+        canvas.style.display = "block";
+
+        // Get the image data and pixels array from the canvas, in order to draw on it.
+        let ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        let imgdata = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        let pixels = imgdata.data;
+
+        // (px, py) are the physical coordinates on the canvas.
+        for (let px = 0; px < canvas.width; px++) {
+            for (let py = 0; py < canvas.height; py++) {
+                // Calculates the logical coordinates (cx, cy) from the physical coord (px, py).
+                let cx = px / canvas.width * (xmax - xmin) + xmin;
+                let cy = py / canvas.height * (ymax - ymin) + ymin;
+                let idx = (py * imgdata.width + px) * 4;
+                // Computes the color value at (x,y) and draw it on the canvas.
+                drawPixel(pixels, cx, cy, idx);
+            }
+        }
+        // Everything above just updates the image data, this performs the actual drawing.
+        ctx.putImageData(imgdata, 0, 0);
+        document.body.style.cursor = 'default';
+        document.getElementById('canvasCPU').style.opacity = "1.0";
+    }
+    // Computes the Mandelbrot value at (x, y),
+    // and sets the color in the pixels array at idx.
+    function drawPixel(pixels, cx, cy, idx) {
+        let i = 0;
+        if (isJulia) {
+            for (; i < maxIterations && cx * cx + cy * cy <= threshold; i++) {
+                let x1 = cx * cx - cy * cy + wx;
+                cy = 2 * cx * cy + wy;
+                cx = x1;
+            }
+        } else {
+            let x = 0;
+            let y = 0;
+            for (; i < maxIterations && x * x + y * y <= threshold; i++) {
+                let x1 = x * x - y * y + cx;
+                y = 2 * x * y + cy;
+                x = x1;
+            }
+        }
+        let r, g, b;
+        if (i >= maxIterations) {
+            r = 0; g = 0; b = 0;
+        } else if (colorSchemeHue) {
+            let scaled = i / maxIterations + colorOffset + 0.5;
+            scaled = scaled - Math.floor(scaled);
+            if (scaled < 1.0 / 6) {
+                r = 255; g = Math.floor(scaled * 6 * 256); b = 0;
+            } else if (scaled < 2.0 / 6) {
+                r = Math.floor((2.0 / 6 - scaled) * 6 * 256); g = 255, b = 0;
+            } else if (scaled < 3.0 / 6) {
+                r = 0; g = 255; b = Math.floor((scaled - 2.0 / 6) * 6 * 256);
+            } else if (scaled < 4.0 / 6) {
+                r = 0; g = Math.floor((4.0 / 6 - scaled) * 6 * 256); b = 255;
+            } else if (scaled < 5.0 / 6) {
+                r = Math.floor((scaled - 4.0 / 6) * 6 * 256); g = 0; b = 255;
+            } else {
+                r = 255; g = 0; b = Math.floor((1.0 - scaled) * 6 * 256);
+            }
+        } else {
+            i = (maxIterations - i) * byteCubed / maxIterations;
+            i = (i + colorOffset * byteCubed) % (byteCubed + 1);
+            r = Math.floor(i / byteSquared);
+            g = Math.floor((i / 256) % 256);
+            b = Math.floor(i % 256);
+        }
+        pixels[idx] = r;
+        pixels[idx + 1] = g;
+        pixels[idx + 2] = b;
+        pixels[idx + 3] = 255;
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // This section performs the actual computation and drawing, using WebGL.
+    ////////////////////////////////////////////////////////////////////////////////
+    let gl = false;
+    function showFractalWebGL() {
+        let otherCanvas = document.getElementById("canvasCPU");
+        let canvas = document.getElementById("canvasWebGL");
+        try {
+            gl = canvas.getContext("experimental-webgl");
+            gl.viewport(0, 0, canvas.width, canvas.height);
+
+            let prog = gl.createProgram();
+            gl.attachShader(prog, getShader(gl, "vertexShader"));
+            gl.attachShader(prog, getShader(gl, "fragmentShader"));
+            gl.linkProgram(prog);
+            gl.useProgram(prog);
+
+            let posAtrLoc = gl.getAttribLocation(prog, "vPos");
+            gl.enableVertexAttribArray(posAtrLoc);
+            let posBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(
+                [-1, -1, 0, 1, -1, 0, -1, 1, 0, 1, 1, 0]), gl.STATIC_DRAW);
+            gl.vertexAttribPointer(posAtrLoc, 3, gl.FLOAT, false, 0, 0);
+            gl.uniform2f(gl.getUniformLocation(prog, "c"), 0.42, 0.22);
+            gl.uniform2f(gl.getUniformLocation(prog, "xymin"), xmin, ymin);
+            gl.uniform2f(gl.getUniformLocation(prog, "xymax"), xmax, ymax);
+            gl.uniform2f(gl.getUniformLocation(prog, "w"), wx, wy);
+            gl.uniform1i(gl.getUniformLocation(prog, "maxiter"), maxIterations);
+            gl.uniform1i(gl.getUniformLocation(prog, "isJulia"), isJulia ? 1 : 0);
+            gl.uniform1i(gl.getUniformLocation(prog, "isHue"), colorSchemeHue ? 1 : 0);
+            gl.uniform1f(gl.getUniformLocation(prog, "colorOffset"), colorOffset);
+            gl.uniform1f(gl.getUniformLocation(prog, "threshold"), threshold);
+            gl.uniform2f(gl.getUniformLocation(prog, "canvasSize"), canvas.width, canvas.height);
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+            gl.flush();
+        } catch (e) {
+            console.log(e);
+            return false;
+        }
+        otherCanvas.style.display = "none";
+        canvas.style.display = "block";
+        return true;
+    }
+    function getShader(gl, id) {
+        var shaderScript = document.getElementById(id);
+        var str = "";
+        var k = shaderScript.firstChild;
+        while (k) {
+            if (k.nodeType == 3) str += k.textContent;
+            k = k.nextSibling;
+        }
+        var shader;
+        if (shaderScript.type == "x-shader/x-fragment") {
+            shader = gl.createShader(gl.FRAGMENT_SHADER);
+        }
+        else if (shaderScript.type == "x-shader/x-vertex") {
+            shader = gl.createShader(gl.VERTEX_SHADER);
+        }
+        else {
+            throw "Unexpected script type";
+        }
+        gl.shaderSource(shader, str);
+        gl.compileShader(shader);
+        if (gl.getShaderParameter(shader, gl.COMPILE_STATUS) == 0) {
+            console.log(gl.getShaderInfoLog(shader));
+            throw "Shader compile failed";
+        }
+        return shader;
+    }
+</script>
+
+<!-- The vertex shader -->
+<script id="vertexShader" type="x-shader/x-vertex">
+attribute vec3 vPos;
+
+void main(void) {
+    gl_Position = vec4(vPos, 1.);
+}
+</script>
+
+<!-- The fragment shader -->
+<script id="fragmentShader" type="x-shader/x-fragment">
+precision highp float;
+precision highp int;
+uniform vec2 c;
+uniform vec2 canvasSize;
+uniform vec2 xymin;
+uniform vec2 xymax;
+uniform vec2 w;
+uniform int maxiter;
+uniform float colorOffset;
+uniform float threshold;
+uniform int isJulia;
+uniform int isHue;
+void main(void) {
+    float cx = gl_FragCoord.x / canvasSize.x * (xymax.x - xymin.x) + xymin.x;
+    float cy = gl_FragCoord.y / canvasSize.y * (xymax.y - xymin.y) + xymin.y;
+    float x = 0., y = 0., xt = 0., x2 = 0., y2 = 0.;
+    int i = 0;
+    if (isJulia > 0) {
+        for (int m = 0; m < 65535; m++) {
+            i = m;
+            if (m >= maxiter) break;
+            x2 = cx*cx;
+            y2 = cy*cy;
+            if (x2 + y2 > threshold) break;
+            xt = x2 - y2 + w.x;
+            cy = 2.0*cx*cy + w.y;
+            cx = xt;
+        }
+    } else {
+        for(int m = 0; m <= 65535; m++){
+            i = m;
+            if (m >= maxiter) break;
+            x2 = x*x;
+            y2 = y*y;
+            if(x2 + y2 > threshold) break;
+            xt = x2 - y2 + cx;
+            y = 2.0*x*y + cy;
+            x = xt;
+        }
+    }
+    
+    if (i >= maxiter) {
+        gl_FragColor = vec4(0., 0., 0., 1.);
+    } else if (isHue > 0) {
+        float scaled = float(i) / float(maxiter) + colorOffset + 0.5;
+        if (scaled >= 1.0) { scaled -= 1.0; }
+        if (scaled >= 1.0) { scaled -= 1.0; }
+        if (scaled < 1./6.) {
+            gl_FragColor = vec4(1, scaled*6., 0., 1.);    
+        } else if (scaled < 2./6.) {
+            gl_FragColor = vec4(2. - (scaled*6.), 1., 0., 1.);    
+        } else if (scaled < 3./6.) {
+            gl_FragColor = vec4(0., 1., scaled*6. - 2., 1.);    
+        } else if (scaled < 4./6.) {
+            gl_FragColor = vec4(0, 4. - (scaled*6.), 1., 1.);    
+        } else if (scaled < 5./6.) {
+            gl_FragColor = vec4(scaled*6. - 4., 0., 1., 1.);    
+        } else {
+            gl_FragColor = vec4(1., 0., 6. - (scaled*6.), 1.);    
+        } 
+    } else {
+        float r;
+        int g;
+        float scaled = float(maxiter - i) / float(maxiter) + colorOffset + 0.07;
+        if (scaled >= 1.0) { scaled -= 1.0; }
+        if (scaled >= 1.0) { scaled -= 1.0; }
+        r = scaled;
+        scaled *= 65536.;
+        g = int(scaled / 256.);
+        scaled -= float(g) * 256.;
+        gl_FragColor = vec4(r, float(g)/256., scaled/256., 1.);
+    }
+}
+</script>
+    </main>
+</body>
+
+</html>
