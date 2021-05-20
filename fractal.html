@@ -21,8 +21,24 @@
     <meta name="theme-color" content="#157878">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <style type="text/css">
+      .page-header {
+          color: #fff;
+          text-align: center;
+          background-color:#012356;
+          background-image: linear-gradient(120deg, #012356, #012356);
+          @include large {
+            padding: 1rem 1rem;
+          }
+          @include medium {
+            padding: 1rem 1rem;
+          }
+          @include small {
+            padding: 1rem 1rem;
+          }
+      }
       .main-content {
           align-content: center;
+          margin: auto;
           max-width: 900px;
           word-wrap: break-word;
           :first-child {
@@ -79,7 +95,7 @@
     </header>
 
     <main id="content" class="main-content" role="main">
-        <div>
+<div>
     <p>
     <div>
         <div id="desc_mandelbrot" style="display: block;">
